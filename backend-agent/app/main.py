@@ -59,5 +59,5 @@ async def process_ingest_trajectory(payload: ScrapeRequest):
         }, timeout=3.0)
     except Exception as e:
         print(f"[SYNC WARNING] Failed to sync to Django: {e}")
-        
+
     return result

@@ -1,2 +1,4 @@
 Django>=5.0,<6.0
 djangorestframework>=3.14.0
+whitenoise
+gunicorn
