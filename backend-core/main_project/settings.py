@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,12 +21,23 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-%a@b&l)+9lhktrd4-0171f1s0w1nl4-pdcoqym$ibv5lcrm(ad'
+# Reads from env var on Render; falls back to this value only for local dev.
+# IMPORTANT: rotate this fallback value since it's been shared/committed already.
+SECRET_KEY = os.environ.get(
+    'SECRET_KEY',
+    'django-insecure-%a@b&l)+9lhktrd4-0171f1s0w1nl4-pdcoqym$ibv5lcrm(ad'
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# On Render, set env var DEBUG=False
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = []
+# On Render, set env var ALLOWED_HOSTS=vision-agentic-render-host.onrender.com
+# (comma-separated if you have more than one host)
+ALLOWED_HOSTS = os.environ.get(
+    'ALLOWED_HOSTS',
+    'localhost,127.0.0.1'
+).split(',')
 
 
 # Application definition
@@ -37,7 +49,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
+
     'rest_framework',
     'scraper_admin',
 ]
@@ -45,6 +57,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'scraper_admin.middleware.SimpleCorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -75,6 +88,8 @@ WSGI_APPLICATION = 'main_project.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+# Kept as SQLite per your choice. Note: on Render's free tier this file
+# resets on every redeploy/restart since the filesystem is ephemeral.
 
 DATABASES = {
     'default': {
@@ -119,8 +134,21 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STORAGES = {
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# CSRF - required for HTTPS cross-origin POSTs (e.g. admin login) on Django 4+
+# On Render, set env var CSRF_TRUSTED_ORIGINS=https://vision-agentic-render-host.onrender.com
+CSRF_TRUSTED_ORIGINS = [
+    origin for origin in os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',') if origin
+]
