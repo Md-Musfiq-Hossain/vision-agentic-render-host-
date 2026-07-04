@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  django-core:
+    build:
+      context: ./backend-core
+      dockerfile: Dockerfile
+    container_name: scraper_django_core
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend-core:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+
+  fastapi-agent:
+    build:
+      context: ./backend-agent
+      dockerfile: Dockerfile
+    container_name: scraper_fastapi_agent
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./backend-agent:/app
+    env_file:
+      - ./backend-agent/.env
+    restart: unless-stopped
+
+  react-ui:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_FASTAPI_URL=http://localhost:8001
+        - VITE_DJANGO_URL=http://localhost:8000
+    container_name: scraper_react_ui
+    ports:
+      - "8082:3000"
+    depends_on:
+      - django-core
+      - fastapi-agent
+    restart: always

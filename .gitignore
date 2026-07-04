@@ -1,0 +1,23 @@
+# Environments & Secrets
+backend-agent/.env
+.env.local
+*.env
+
+# Python caching & environments
+**/__pycache__/
+*.pyc
+.venv/
+env/
+_conda/
+*.sqlite3
+
+# Node modules & build artifacts (Frontend)
+**/node_modules/
+**/dist/
+**/dist-ssr/
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
